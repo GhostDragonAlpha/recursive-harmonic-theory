@@ -1,4 +1,4 @@
-md_content = """# Recursive Harmonic Geometry as a Unified Physical Framework
+# Recursive Harmonic Geometry as a Unified Physical Framework
 *A φ-Based Theory of Everything Linking Quantum, Cosmic, and Biological Structure*
 
 ## 1. Abstract
@@ -113,10 +113,26 @@ Prime numbers are typically regarded as aperiodic and randomly distributed. Howe
 - Prime numbers — foundational to mathematics and encryption — may arise from the same recursive geometric principles that shape atoms, galaxies, and brains.
 
 **Conclusion:** Prime sequences, when transformed into waveforms, reveal φ-aligned resonance — further suggesting that recursive harmonic geometry governs not only matter and energy, but number theory itself.
-"""
 
-md_file_path = "/mnt/data/Recursive_Harmonic_Theory_Updated.md"
-with open(md_file_path, "w") as f:
-    f.write(md_content)
 
-md_file_path
+---
+
+## 📊 Appendix: Visual Test Results
+
+### 🔢 Test #1 – Harmonic Field Simulation
+![Test #1: Harmonic Field](Test1_Harmonic_Field.png)
+
+---
+
+### 💧 Test #4 – Hydrogen Spectrum FFT
+![Test #4: Hydrogen Spectrum FFT](Test4_Hydrogen_Spectrum_FFT.png)
+
+---
+
+### 🌊 Test #5 – Recursive Interference Pattern
+![Test #5: Recursive Interference Pattern](Test5_Recursive_Interference.png)
+
+---
+
+### 🔍 Test #7 – Prime Number Harmonic FFT
+![Test #7: Prime FFT vs Shuffled](FFT_Prime_vs_Shuffled.png)
