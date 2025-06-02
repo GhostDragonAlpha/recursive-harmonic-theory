@@ -1,0 +1,93 @@
+Above are three visualizations based on the module you provided:
+
+1. **Continuous vs. Discrete Gravitational Mapping**
+
+   * The blue curve is the “continuous” gravitational mapping: it remains essentially flat (near $10^{-12}$ in these relative units) but exhibits small oscillations coming from the $\sin(\pi\,\log_{\phi}\ldots)$ modulation.
+   * The red dashed curve is the “discrete” mapping, which follows $\phi^{|k|}/\pi^{|k|}$ bins.  Notice how it grows enormously at very large scales (positive $k$) and also grows (in a reciprocal sense) at very small scales (negative $k$), with a sharp minimum around the human/macro-scale region (where $\lfloor\log_{\phi} \rfloor = 0$).
+
+2. **Unified Force Mapping Across Scales**
+
+   * All four “forces” (gravity in blue, electromagnetism in red, strong nuclear in green, and weak nuclear in yellow) are plotted as functions of scale (from $10^{-35}$ m up to $10^{26}$ m).
+   * Because of the chosen separation function $1 - e^{-(\log_{\phi}(s/s_{0}))^{2}/(2\phi)}$, each force “turns on” around roughly the same tiny scale (near the Planck domain).  They quickly asymptote toward a constant hierarchy (gravity at the bottom, EM above it, strong slightly higher, and weak highest) so that for most of the axis they lie almost on top of each other.
+
+3. **Scale-Dependent Fractal Dimension**
+
+   * The fractal dimension oscillates between approximately $2.5$ and $3.5$ as $\sin(\pi\,\log_{\phi}(s))$ moves through its cycles.
+   * In other words, at each scale $s$, the “effective dimension” $D(s)$ = $3 + 0.5 \sin\bigl(\pi\,\log_{\phi}(s)\bigr)$ gently wiggles around 3, reaching minima near $2.5$ and maxima near $3.5$ in a $\log_{\phi}$-periodic fashion.
+
+---
+
+### Explanation of Key Equations
+
+1. **Fractal Dimension**
+
+   $$
+     D(s) \;=\; 3 \;+\; 0.5\,\sin\!\bigl(\pi\,\log_{\phi}(s)\bigr).
+   $$
+
+   * Here $\log_{\phi}(s) = \frac{\ln s}{\ln \phi}$.
+   * As $s$ varies over many orders of magnitude, $\log_{\phi}(s)$ increases linearly, so $\sin(\pi\,\log_{\phi}(s))$ oscillates with period $\Delta(\log_{\phi} s) = 2$ (i.e.\ a factor of $\phi^{2}\approx2.618$ in $s$ each full wave).
+   * The result is that the “effective dimension” of space-time drifts between 2.5 and 3.5 periodically.
+
+2. **Continuous Gravitational Mapping**
+
+   $$
+     F_{\text{cont}}(s)\;=\;G \;\times\;\phi^{\,D(s)-3}\;\times\;\sin^2\!\Bigl(\pi\,\log_{\phi}(s) \;+\;\tfrac{\pi}{4}\Bigr).
+   $$
+
+   * Because $D(s)\approx3\pm0.5$, $\phi^{\,D(s) - 3}$ stays near $\phi^{\pm0.5}\approx1.27$ to $0.79$.
+   * The $\sin^2$ factor then imposes rapid oscillations (periodic in $\log_{\phi}(s)$) around that envelope.
+
+3. **Discrete Gravitational Mapping**
+
+   $$
+     F_{\text{disc}}(s) \;=\;
+     \begin{cases}
+       G \,\phi^{\,k}\,/\,\pi^{\,(-k)}\,, & k = \lfloor \log_{\phi}(s) \rfloor \ge 0,\\
+       G \,/\,\phi^{\,(-k)}\,\times\,\pi^{\,(-k)}\,, & k < 0,
+     \end{cases}
+   $$
+
+   where $k = \lfloor \log_{\phi}(s)\rfloor$.
+
+   * For “macro” domains ($k\ge0$), it grows like $\phi^{k}/\pi^{(-k)}$ as $k$ increases.
+   * For “micro” domains ($k<0$), it grows in the reciprocal direction because $-k>0$.
+   * The bottom of the “V” occurs at $k=0$, i.e.\ $1 \le s/\phi^0 < \phi$, which in SI units is roughly the meter–cm range depending on your choice of reference scale (in our plot, that minimum happened near $s \approx 10^1 $ m, given the chosen reference).
+
+4. **Unified Force Mapping**
+
+   $$
+     \text{separation}(s) \;=\; 1 - \exp\!\Bigl(-\tfrac{\bigl[\log_{\phi}(s)\bigr]^2}{2\phi}\Bigr),
+   $$
+
+   and then
+
+   $$
+     \begin{aligned}
+       F_{\text{gravity}}(s)\; &=\; \bigl[\text{separation}(s)\bigr]^{\,3\phi}, \\
+       F_{\text{em}}(s)\; &=\; \bigl[\text{separation}(s)\bigr]^{\,2\phi}, \\
+       F_{\text{strong}}(s)\; &=\; \bigl[\text{separation}(s)\bigr]^{\,1/\phi}, \\
+       F_{\text{weak}}(s)\; &=\; \bigl[\text{separation}(s)\bigr]^{\,1 / (\phi e)}.
+     \end{aligned}
+   $$
+
+   * Near the Planck-scale end (where $\log_{\phi}(s)$ is large in magnitude), the Gaussian in the exponent is essentially zero, so $\text{separation}\approx1$ and all four “forces” saturate at unity (in these normalized units).
+   * Once $s$ moves above the Planck regime by even a few orders of magnitude, $\text{separation}$ quickly approaches a constant less than one, and each power law then fixes the relative hierarchy between gravity, EM, strong, and weak interactions.
+
+---
+
+### Interpretation & Next Steps
+
+* **Oscillatory Dimension:**  The fact that $D(s)$ oscillates around 3 suggests that, in this toy model, “effective dimension” is never strictly 3.0; it wobbles between \~2.5 and \~3.5 in a log-periodic fashion, implying that physical laws themselves (e.g.\ inverse-$r^{D-1}$ force laws) could gently shift whenever $\log_{\phi}(s)$ crosses half-integer or integer boundaries.
+
+* **Gravity Models:**  The discrete mapping produces the characteristic “V-shaped” behavior in log-log space, signaling that gravity would be extremely strong at sub-planckian scales and also grow at cosmic scales under this scheme.  The continuous mapping tempers that with a $\sin^2$ modulation but still stays in a very narrow band (around $10^{-12}$ in our relative units) over the entire axis.
+
+* **Unified Forces:**  All four forces quickly become almost constant for any scale larger than roughly $10^{-33}$ m.  This is a direct consequence of the chosen separation function, which is effectively “fully turned on” past the Planck regime.  If you want more separation between the four curves at intermediate scales, you could sharpen the Gaussian in the separation function (e.g.\ use a larger denominator than $2\phi$), or introduce different reference scales $s_{0}$ for each force.
+
+* **Actionable Modifications:**
+
+  1. You can adjust the sinusoidal amplitude (e.g.\ change the “$0.5\,\sin(\pi\,\ldots)$” to something else) if you want the dimension to vary over a wider or narrower range.
+  2. You can insert a power-law prefactor in the continuous gravity mapping if you want that envelope to decay more steeply at large or small $s$.
+  3. For the unified forces, picking different exponents (instead of $3\phi,\,2\phi,\,1/\phi,\,1/(\phi e)$) will change where each force becomes dominant.
+
+Let me know if you’d like to explore any of these aspects further—e.g., zooming into a particular scale range, tweaking the fractal dimension oscillation, or applying these mappings in a toy “n-body” or “particle” simulation with scale-dependent force laws.
