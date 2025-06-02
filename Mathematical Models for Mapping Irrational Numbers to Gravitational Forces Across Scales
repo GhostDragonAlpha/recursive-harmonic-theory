@@ -1,0 +1,435 @@
+"""
+Mathematical Models for Mapping Irrational Numbers to Gravitational Forces Across Scales
+
+This module develops comprehensive mathematical models that formalize the relationships
+between irrational numbers and fundamental forces within the Fractal Scale-Invariant
+Space-Time Theory framework.
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy import constants
+import sympy as sp
+
+# Define symbolic variables for mathematical derivations
+s, s0, F0, G0, D, phi, pi, e, alpha, hbar, c = sp.symbols('s s0 F0 G0 D phi pi e alpha hbar c', real=True, positive=True)
+
+# Define key irrational numbers with high precision
+PHI = (1 + np.sqrt(5)) / 2  # Golden ratio
+PI = np.pi
+E = np.e
+SQRT2 = np.sqrt(2)
+ALPHA = constants.fine_structure  # Fine structure constant
+HBAR = constants.hbar  # Reduced Planck constant
+C = constants.c  # Speed of light
+G = constants.G  # Gravitational constant
+
+def scale_dependent_dimension(scale, reference_scale=1.0, base_dimension=3.0, phi_value=PHI):
+    """
+    Calculate the scale-dependent fractal dimension of space-time.
+    
+    Parameters:
+    -----------
+    scale : float
+        The scale at which to calculate the dimension
+    reference_scale : float
+        The reference scale where dimension equals base_dimension
+    base_dimension : float
+        The dimension at the reference scale
+    phi_value : float
+        The value of the golden ratio
+        
+    Returns:
+    --------
+    float : The fractal dimension at the given scale
+    """
+    # Logarithmic scaling based on the golden ratio
+    log_scale_ratio = np.log(scale / reference_scale) / np.log(phi_value)
+    
+    # Scale-dependent dimension that varies with logarithm of scale
+    dimension = base_dimension + 0.5 * np.sin(PI * log_scale_ratio)
+    
+    return dimension
+
+def continuous_gravitational_mapping(scale, reference_scale=1.0, base_force=G, phi_value=PHI):
+    """
+    Continuous mapping function for gravitational force across scales.
+    
+    Parameters:
+    -----------
+    scale : float or array
+        The scale(s) at which to calculate the gravitational force
+    reference_scale : float
+        The reference scale where force equals base_force
+    base_force : float
+        The force value at the reference scale
+    phi_value : float
+        The value of the golden ratio
+        
+    Returns:
+    --------
+    float or array : The gravitational force at the given scale(s)
+    """
+    # Calculate scale-dependent dimension
+    dimension = scale_dependent_dimension(scale, reference_scale, 3.0, phi_value)
+    
+    # Continuous mapping function based on phi, pi, and scale-dependent dimension
+    log_scale_ratio = np.log(scale / reference_scale) / np.log(phi_value)
+    
+    # Core equation combining phi-scaling with sinusoidal modulation
+    force = base_force * (phi_value ** (dimension - 3)) * np.sin(PI * log_scale_ratio + PI/4)**2
+    
+    return force
+
+def discrete_gravitational_mapping(scale, reference_scale=1.0, base_force=G, phi_value=PHI):
+    """
+    Discrete mapping function for gravitational force across scale domains.
+    
+    Parameters:
+    -----------
+    scale : float or array
+        The scale(s) at which to calculate the gravitational force
+    reference_scale : float
+        The reference scale where force equals base_force
+    base_force : float
+        The force value at the reference scale
+    phi_value : float
+        The value of the golden ratio
+        
+    Returns:
+    --------
+    float or array : The gravitational force at the given scale(s)
+    """
+    # Determine scale domain (logarithmic binning based on powers of phi)
+    log_scale = np.log(scale / reference_scale) / np.log(phi_value)
+    scale_domain = np.floor(log_scale)
+    
+    # Define phi and pi exponents for each domain
+    phi_exponent = np.abs(scale_domain)
+    pi_exponent = np.maximum(0, -scale_domain)
+    
+    # Discrete mapping function with different irrational number combinations per domain
+    if np.isscalar(scale):
+        if scale_domain >= 0:  # Macro scales (cosmic to human)
+            force = base_force * (phi_value ** phi_exponent) / (PI ** pi_exponent)
+        else:  # Micro scales (molecular to quantum)
+            force = base_force / (phi_value ** phi_exponent) * (PI ** pi_exponent)
+    else:
+        # Vectorized calculation for array input
+        force = np.zeros_like(scale, dtype=float)
+        macro_mask = scale_domain >= 0
+        micro_mask = ~macro_mask
+        
+        force[macro_mask] = base_force * (phi_value ** phi_exponent[macro_mask]) / (PI ** pi_exponent[macro_mask])
+        force[micro_mask] = base_force / (phi_value ** phi_exponent[micro_mask]) * (PI ** pi_exponent[micro_mask])
+    
+    return force
+
+def derive_gravitational_constant():
+    """
+    Derive the gravitational constant G from fundamental irrational numbers and constants.
+    
+    Returns:
+    --------
+    float : The derived value of G
+    symbolic : The symbolic expression for G
+    """
+    # Symbolic derivation
+    symbolic_G = (PI * phi) / (E * sp.sqrt(2)) * c**3 / (hbar * alpha)
+    
+    # Numerical calculation
+    derived_G = (PI * PHI) / (E * SQRT2) * C**3 / (HBAR * ALPHA)
+    
+    return derived_G, symbolic_G
+
+def electromagnetic_force_mapping(scale, reference_scale=1.0, base_coupling=ALPHA, phi_value=PHI):
+    """
+    Mapping function for electromagnetic force across scales.
+    
+    Parameters:
+    -----------
+    scale : float or array
+        The scale(s) at which to calculate the electromagnetic force
+    reference_scale : float
+        The reference scale where coupling equals base_coupling
+    base_coupling : float
+        The coupling value at the reference scale (fine structure constant)
+    phi_value : float
+        The value of the golden ratio
+        
+    Returns:
+    --------
+    float or array : The electromagnetic coupling at the given scale(s)
+    """
+    # Logarithmic scaling based on the golden ratio
+    log_scale_ratio = np.log(scale / reference_scale) / np.log(phi_value)
+    
+    # Scale-dependent coupling that oscillates with scale
+    coupling = base_coupling * (1 + 0.1 * np.sin(PI * log_scale_ratio))
+    
+    return coupling
+
+def strong_nuclear_force_mapping(scale, reference_scale=1e-15, base_coupling=1.0, phi_value=PHI):
+    """
+    Mapping function for strong nuclear force across scales.
+    
+    Parameters:
+    -----------
+    scale : float or array
+        The scale(s) at which to calculate the strong nuclear force
+    reference_scale : float
+        The reference scale where coupling equals base_coupling
+    base_coupling : float
+        The coupling value at the reference scale
+    phi_value : float
+        The value of the golden ratio
+        
+    Returns:
+    --------
+    float or array : The strong force coupling at the given scale(s)
+    """
+    # Strong force has characteristic exponential decay with distance
+    # Modulated by the golden ratio for scale invariance
+    coupling = base_coupling * np.exp(-(scale / reference_scale) * phi_value)
+    
+    return coupling
+
+def weak_nuclear_force_mapping(scale, reference_scale=1e-18, base_coupling=1.0, phi_value=PHI):
+    """
+    Mapping function for weak nuclear force across scales.
+    
+    Parameters:
+    -----------
+    scale : float or array
+        The scale(s) at which to calculate the weak nuclear force
+    reference_scale : float
+        The reference scale where coupling equals base_coupling
+    base_coupling : float
+        The coupling value at the reference scale
+    phi_value : float
+        The value of the golden ratio
+        
+    Returns:
+    --------
+    float or array : The weak force coupling at the given scale(s)
+    """
+    # Weak force with characteristic scale and golden ratio modulation
+    coupling = base_coupling * SQRT2 * np.exp(-(scale / reference_scale) * E / phi_value)
+    
+    return coupling
+
+def unified_force_mapping(scale, reference_scale=1e-35, phi_value=PHI):
+    """
+    Unified mapping function for all fundamental forces across scales.
+    
+    Parameters:
+    -----------
+    scale : float or array
+        The scale(s) at which to calculate the unified force
+    reference_scale : float
+        The reference scale where forces unify (Planck scale)
+    phi_value : float
+        The value of the golden ratio
+        
+    Returns:
+    --------
+    dict : Dictionary containing force strengths for each fundamental force
+    """
+    # Calculate scale-dependent dimension
+    dimension = scale_dependent_dimension(scale, reference_scale, 4.0, phi_value)
+    
+    # Logarithmic scaling based on the golden ratio
+    log_scale_ratio = np.log(scale / reference_scale) / np.log(phi_value)
+    
+    # Base unified force at reference scale
+    unified_coupling = 1.0
+    
+    # Force separation function based on scale
+    separation_factor = 1.0 - np.exp(-(log_scale_ratio)**2 / (2 * phi_value))
+    
+    # Calculate individual force strengths
+    gravity = unified_coupling * separation_factor**(3 * phi_value)
+    electromagnetism = unified_coupling * separation_factor**(2 * phi_value)
+    strong = unified_coupling * separation_factor**(1 / phi_value)
+    weak = unified_coupling * separation_factor**(1 / (phi_value * E))
+    
+    return {
+        'gravity': gravity,
+        'electromagnetism': electromagnetism,
+        'strong': strong,
+        'weak': weak,
+        'dimension': dimension
+    }
+
+def matter_movement_prediction(mass, initial_position, initial_velocity, time_span, scale):
+    """
+    Predict matter movement based on scale-dependent gravitational forces.
+    
+    Parameters:
+    -----------
+    mass : float
+        Mass of the object
+    initial_position : array
+        Initial position vector [x, y, z]
+    initial_velocity : array
+        Initial velocity vector [vx, vy, vz]
+    time_span : array
+        Time points for prediction
+    scale : float
+        Scale of the system (determines which gravitational mapping to use)
+        
+    Returns:
+    --------
+    array : Predicted positions over time
+    """
+    # Get scale-appropriate gravitational constant
+    g_force = continuous_gravitational_mapping(scale)
+    
+    # Simple Newtonian motion model (for demonstration)
+    # In a real implementation, this would be a more sophisticated numerical integration
+    positions = np.zeros((len(time_span), 3))
+    positions[0] = initial_position
+    velocity = np.array(initial_velocity)
+    
+    for i in range(1, len(time_span)):
+        dt = time_span[i] - time_span[i-1]
+        # Apply scale-dependent gravity
+        acceleration = -g_force * mass * positions[i-1] / np.linalg.norm(positions[i-1])**3
+        velocity = velocity + acceleration * dt
+        positions[i] = positions[i-1] + velocity * dt
+    
+    return positions
+
+def visualize_force_scaling():
+    """
+    Create visualizations of how forces scale across different domains.
+    
+    Returns:
+    --------
+    dict : Dictionary of figure objects
+    """
+    # Define scale range from quantum to cosmic (log scale)
+    scales = np.logspace(-35, 26, 1000)
+    
+    # Calculate forces across scales
+    gravity_continuous = continuous_gravitational_mapping(scales)
+    gravity_discrete = discrete_gravitational_mapping(scales)
+    em_force = electromagnetic_force_mapping(scales)
+    strong_force = strong_nuclear_force_mapping(scales)
+    weak_force = weak_nuclear_force_mapping(scales)
+    
+    # Create unified force plot
+    unified_forces = unified_force_mapping(scales)
+    
+    # Create figures
+    figures = {}
+    
+    # Continuous vs Discrete Gravity
+    fig1, ax1 = plt.subplots(figsize=(12, 8))
+    ax1.loglog(scales, gravity_continuous, 'b-', label='Continuous Gravitational Mapping')
+    ax1.loglog(scales, gravity_discrete, 'r--', label='Discrete Gravitational Mapping')
+    ax1.set_xlabel('Scale (meters)')
+    ax1.set_ylabel('Relative Gravitational Force')
+    ax1.set_title('Continuous vs Discrete Gravitational Force Mapping Across Scales')
+    ax1.legend()
+    ax1.grid(True, which="both", ls="-")
+    
+    # Add scale domain labels
+    scale_domains = [
+        (1e-35, 1e-15, 'Quantum'),
+        (1e-15, 1e-10, 'Nuclear'),
+        (1e-10, 1e-9, 'Atomic'),
+        (1e-9, 1e-2, 'Molecular'),
+        (1e-2, 1e6, 'Human'),
+        (1e6, 1e8, 'Planetary'),
+        (1e8, 1e18, 'Stellar'),
+        (1e18, 1e20, 'Galactic'),
+        (1e20, 1e26, 'Cosmic')
+    ]
+    
+    for start, end, label in scale_domains:
+        ax1.axvspan(start, end, alpha=0.1, color='gray')
+        ax1.text(np.sqrt(start*end), ax1.get_ylim()[0]*1.5, label, 
+                 horizontalalignment='center', verticalalignment='bottom', rotation=90)
+    
+    figures['gravity_comparison'] = fig1
+    
+    # All Forces Unified Plot
+    fig2, ax2 = plt.subplots(figsize=(12, 8))
+    ax2.loglog(scales, unified_forces['gravity'], 'b-', label='Gravity')
+    ax2.loglog(scales, unified_forces['electromagnetism'], 'r-', label='Electromagnetism')
+    ax2.loglog(scales, unified_forces['strong'], 'g-', label='Strong Nuclear')
+    ax2.loglog(scales, unified_forces['weak'], 'y-', label='Weak Nuclear')
+    ax2.set_xlabel('Scale (meters)')
+    ax2.set_ylabel('Relative Force Strength')
+    ax2.set_title('Unified Force Mapping Across Scales')
+    ax2.legend()
+    ax2.grid(True, which="both", ls="-")
+    
+    # Add scale domain labels
+    for start, end, label in scale_domains:
+        ax2.axvspan(start, end, alpha=0.1, color='gray')
+        ax2.text(np.sqrt(start*end), ax2.get_ylim()[0]*1.5, label, 
+                 horizontalalignment='center', verticalalignment='bottom', rotation=90)
+    
+    figures['unified_forces'] = fig2
+    
+    # Scale-dependent dimension
+    dimensions = np.array([scale_dependent_dimension(s) for s in scales])
+    fig3, ax3 = plt.subplots(figsize=(12, 8))
+    ax3.semilogx(scales, dimensions, 'k-', label='Fractal Dimension')
+    ax3.set_xlabel('Scale (meters)')
+    ax3.set_ylabel('Fractal Dimension')
+    ax3.set_title('Scale-Dependent Fractal Dimension of Space-Time')
+    ax3.grid(True, which="both", ls="-")
+    
+    # Add scale domain labels
+    for start, end, label in scale_domains:
+        ax3.axvspan(start, end, alpha=0.1, color='gray')
+        ax3.text(np.sqrt(start*end), ax3.get_ylim()[0] + 0.1, label, 
+                 horizontalalignment='center', verticalalignment='bottom', rotation=90)
+    
+    figures['fractal_dimension'] = fig3
+    
+    # Save figures
+    for name, fig in figures.items():
+        fig.savefig(f'/home/ubuntu/irrational_gravity_model/visualizations/{name}.png', dpi=300, bbox_inches='tight')
+    
+    return figures
+
+def symbolic_derivations():
+    """
+    Perform symbolic derivations of key equations in the model.
+    
+    Returns:
+    --------
+    dict : Dictionary of symbolic expressions
+    """
+    # Define symbolic variables
+    x, y, z, t = sp.symbols('x y z t')
+    m1, m2, r = sp.symbols('m1 m2 r')
+    
+    # Symbolic expression for scale-dependent dimension
+    symbolic_dimension = D + sp.sin(pi * sp.log(s/s0, phi)) / 2
+    
+    # Symbolic expression for continuous gravitational mapping
+    symbolic_continuous_gravity = G0 * phi**(symbolic_dimension - 3) * sp.sin(pi * sp.log(s/s0, phi) + pi/4)**2
+    
+    # Symbolic expression for gravitational force between two masses
+    symbolic_force = G0 * phi**(symbolic_dimension - 3) * m1 * m2 / r**2
+    
+    # Symbolic expression for unified force separation
+    separation_factor = 1 - sp.exp(-(sp.log(s/s0, phi))**2 / (2 * phi))
+    
+    # Symbolic expressions for individual forces
+    symbolic_gravity = F0 * separation_factor**(3 * phi)
+    symbolic_em = F0 * separation_factor**(2 * phi)
+    symbolic_strong = F0 * separation_factor**(1 / phi)
+    symbolic_weak = F0 * separation_factor**(1 / (phi * e))
+    
+    # Symbolic expression for matter movement (simplified)
+    symbolic_position = sp.Matrix([
+        x + sp.Symbol('vx') * t + sp.Rational(1, 2) * symbolic_gravity * t**2,
+        y + sp.Symbol('vy') * t + sp.Rational(1, 2) * symbolic_gravity * t**2,
+        z + sp.Symbol('vz') * t + sp.Rational(1, 2) * 
+(Content truncated due to size limit. Use line ranges to read in chunks)
