@@ -1,0 +1,59 @@
+## 1. Introduction
+
+Modifications of gravity at Solar System scales have been explored extensively—ranging from MOND‐type frameworks to Yukawa‐like potentials—to account for observed anomalies without invoking dark matter or dark energy. The Fractal‐Recursive‐Harmonic (FRH) force law is one such proposal, postulating that the effective gravitational exponent can vary with distance and that a small harmonic oscillation in $\ln r$ might introduce measurable corrections.
+
+Concretely, suppose two point masses $m_i$ and $m_j$ are separated by a Euclidean distance $r$.  In Newtonian gravity, the acceleration of $m_i$ due to $m_j$ is
+
+$$
+\mathbf{a}_{\rm Newt}(r) \;=\; -\,G\,\frac{m_j}{r^2}\,\hat{\mathbf{r}}\,,
+$$
+
+where $G$ is the gravitational constant and $\hat{\mathbf{r}}$ is the unit vector pointing from $m_j$ to $m_i$.  The FRH prescription generalizes this to
+
+$$
+\mathbf{a}_{\rm FRH}(r) 
+\;=\; 
+-\,G\,\frac{m_j}{\,r^{\,2+\delta}\,}
+\Bigl[\,1 + A\,\sin\bigl(\delta\,\ln r\bigr)\Bigr]\,\hat{\mathbf{r}}\,,
+$$
+
+with two dimensionless parameters:
+
+* $\delta \in [0,1]$ (modifies the exponent from $2$ to $2+\delta$),
+* $A    \in [0,1]$ (amplitude of the harmonic oscillation in $\ln r$).
+
+When $(\delta,A)=(0,0)$, the FRH form reduces exactly to Newton’s inverse‐square law.  If $\delta>0$, the leading radial dependence becomes $r^{-(2+\delta)}$—steeper than Newtonian—and the $\sin(\delta\ln r)$ term produces small “wiggles” in the gravitational strength as a function of $\ln r$.  Proponents of FRH have suggested that such behavior might explain subtle anomalies—e.g., tiny discrepancies in planetary perihelion precession or Trojan asteroid trajectories—without invoking additional unseen mass.
+
+However, any modification of gravity must pass stringent Solar System tests.  Most previous constraints on FRH‐type laws have relied on single‐body analyses (planetary ephemerides, spacecraft tracking).  A more direct three‐body test can be performed using Jupiter’s Trojan asteroids: objects that share Jupiter’s orbit but librate around the L4 or L5 Lagrange points.  In particular, asteroid 588 Achilles is well‐observed and resides in a stable L4 Trojan region.  Its heliocentric acceleration is determined jointly by the Sun’s and Jupiter’s gravity in a genuine three‐body configuration, making it an ideal probe of any departure from Newton’s law.
+
+In this study, we perform a month‐long, data‐driven test of the simplest constant‐$\delta$, constant‐$A$ FRH form using JPL/HORIZONS ephemerides for Sun, Jupiter, and 588 Achilles.  The main steps are:
+
+1. **Data Acquisition (Section 2):**
+   Download raw “geometric, heliocentric, ecliptic J2000.0” Cartesian positions for Sun, Jupiter, and 588 Achilles from JPL/HORIZONS, covering 2025 June 3 00:00 TDB to 2025 July 3 00:00 TDB at 1‐day intervals (31 epochs).
+
+2. **Observed Acceleration (Section 3):**
+   Parse the 31 daily positions, compute 29 interior mid‐point accelerations for Achilles by a 3‐point centered finite difference $\bigl(\Delta t=86{,}400\,\mathrm{s}\bigr)$.  These 29 vectors $\{\mathbf{a}_{\rm obs}(k)\}$ serve as the “ground truth.”
+
+3. **FRH Prediction (Section 4):**
+   For each day $k$, compute separations $r_{13}(k)$ (Sun→Achilles) and $r_{23}(k)$ (Jupiter→Achilles), form unit vectors, and evaluate
+
+   $$
+   \mathbf{a}_{\rm FRH}^{(k)} 
+   = -\,G\,m_{\odot}\,\frac{1 + A\,\sin\bigl(\delta\,\ln r_{13}(k)\bigr)}{\,r_{13}(k)^{2+\delta}\,}\,\hat{\mathbf{u}}_{13}(k)
+     \;-\;G\,m_{\rm J}\,\frac{1 + A\,\sin\bigl(\delta\,\ln r_{23}(k)\bigr)}{\,r_{23}(k)^{2+\delta}\,}\,\hat{\mathbf{u}}_{23}(k).
+   $$
+
+4. **Parameter Fitting (Section 5):**
+   Define the sum‐of‐squares error
+
+   $$
+   \mathrm{SSE}(\delta,A)
+   = \sum_{k=1}^{29} \bigl\|\mathbf{a}_{\rm FRH}^{(k)} - \mathbf{a}_{\rm obs}^{(k)}\bigr\|^2.
+   $$
+
+   Perform (a) a coarse $51\times 51$ grid search over $\delta,A \in [0,1]$; (b) a bounded L‐BFGS‐B refinement starting from the best grid point.  Record best‐fit $(\delta_{\rm opt},A_{\rm opt})$, RMSE, and any systematic offset.
+
+5. **Results & Discussion (Section 6):**
+   Present all intermediate arrays (positions, separations, norms, unit vectors, observed accelerations), the complete Python code (Appendix A), and the full 29×(observed, predicted, residual) table (Appendix B).  Show that the global minimum occurs at $(\delta,A) \approx (1.000,\,1.000)$, but the FRH prediction underpredicts $\mathbf{a}_{\rm obs}$ by a nearly constant $\approx4.10\times10^{-7}\,\mathrm{km/s}^2$, with an RMSE of $4.10\times10^{-7}\,\mathrm{km/s}^2$.  Conclude that the simplest FRH law behaves as a “shadow” of Newtonian gravity—systematically too weak—and therefore any viable FRH‐type modification must enforce an exact $1/r^2$ limit (i.e., $\delta\to 0$ for Solar System scales) or introduce a more sophisticated oscillatory mechanism.
+
+By providing every raw datum, every intermediate calculation, and the full code, this work offers a fully transparent, reproducible three‐body test of FRH in the Solar System.
