@@ -1,0 +1,138 @@
+## 4. FRH Model Definition
+
+We adopt the simplest constant‐exponent, constant‐amplitude FRH form over the one‐month interval.  Write
+
+$$
+D = 2 + \delta, 
+\quad 
+M(r) = 1 + A\,\sin\bigl(\delta\,\ln r\bigr),
+$$
+
+where $\delta\in[0,1]$ and $A\in[0,1]$.  For each day index $k=0,\dots,30$:
+
+1. **Separations and Unit Vectors** (from Section 2.3):
+
+   $$
+   \mathbf{r}_{13}(k) = \bigl(x_{\rm ach}(k) - x_{\rm sun}(k),\,y_{\rm ach}(k) - y_{\rm sun}(k),\,z_{\rm ach}(k) - z_{\rm sun}(k)\bigr),
+   \quad
+   r_{13}(k) = \|\mathbf{r}_{13}(k)\|,
+   \quad
+   \hat{\mathbf{u}}_{13}(k) = \frac{\mathbf{r}_{13}(k)}{\,r_{13}(k)\,},
+   $$
+
+   $$
+   \mathbf{r}_{23}(k) = \bigl(x_{\rm ach}(k) - x_{\rm jup}(k),\,y_{\rm ach}(k) - y_{\rm jup}(k),\,z_{\rm ach}(k) - z_{\rm jup}(k)\bigr),
+   \quad
+   r_{23}(k) = \|\mathbf{r}_{23}(k)\|,
+   \quad
+   \hat{\mathbf{u}}_{23}(k) = \frac{\mathbf{r}_{23}(k)}{\,r_{23}(k)\,}.
+   $$
+
+2. **FRH Acceleration Contributions**
+   The FRH acceleration on Achilles due to the Sun at index $k$ is
+
+   $$
+   \mathbf{a}_{13}^{\rm FRH}(k)
+   = -\,G\,m_{\odot}\,\frac{\,1 + A\,\sin\bigl(\delta\,\ln r_{13}(k)\bigr)\!}{r_{13}(k)^{\,2+\delta}}\,\hat{\mathbf{u}}_{13}(k).
+   $$
+
+   Similarly, the contribution from Jupiter is
+
+   $$
+   \mathbf{a}_{23}^{\rm FRH}(k)
+   = -\,G\,m_{\rm J}\,\frac{\,1 + A\,\sin\bigl(\delta\,\ln r_{23}(k)\bigr)\!}{r_{23}(k)^{\,2+\delta}}\,\hat{\mathbf{u}}_{23}(k).
+   $$
+
+   Combining,
+
+   $$
+   \mathbf{a}_{\rm FRH}(k)
+   = \mathbf{a}_{13}^{\rm FRH}(k)
+   \;+\;\mathbf{a}_{23}^{\rm FRH}(k).
+   $$
+
+   In Cartesian components, for $k=0,\dots,30$,
+
+   $$
+   \begin{aligned}
+   a_{x,\rm FRH}(k)
+   &= -\,G\,m_{\odot}\,r_{13}(k)^{-(2+\delta)}\bigl[\,1 + A\,\sin(\delta\ln r_{13}(k))\bigr]\,\hat{u}_{x,13}(k) \\
+   &\quad -\,G\,m_{\rm J}\,r_{23}(k)^{-(2+\delta)}\bigl[\,1 + A\,\sin(\delta\ln r_{23}(k))\bigr]\,\hat{u}_{x,23}(k), \\[6pt]
+   a_{y,\rm FRH}(k)
+   &= -\,G\,m_{\odot}\,r_{13}(k)^{-(2+\delta)}\bigl[\,1 + A\,\sin(\delta\ln r_{13}(k))\bigr]\,\hat{u}_{y,13}(k) \\
+   &\quad -\,G\,m_{\rm J}\,r_{23}(k)^{-(2+\delta)}\bigl[\,1 + A\,\sin(\delta\ln r_{23}(k))\bigr]\,\hat{u}_{y,23}(k), \\[6pt]
+   a_{z,\rm FRH}(k)
+   &= -\,G\,m_{\odot}\,r_{13}(k)^{-(2+\delta)}\bigl[\,1 + A\,\sin(\delta\ln r_{13}(k))\bigr]\,\hat{u}_{z,13}(k) \\
+   &\quad -\,G\,m_{\rm J}\,r_{23}(k)^{-(2+\delta)}\bigl[\,1 + A\,\sin(\delta\ln r_{23}(k))\bigr]\,\hat{u}_{z,23}(k).
+   \end{aligned}
+   $$
+
+   Here:
+
+   * $G = 6.67430\times10^{-20}\,\mathrm{km}^3/\mathrm{kg}/\mathrm{s}^2$,
+   * $m_{\odot} = 1.9885\times10^{30}\,\mathrm{kg}$,
+   * $m_{\rm J} = 1.89813\times10^{27}\,\mathrm{kg}$.
+
+3. **Interior 29 Values**
+   Since the observed acceleration $\mathbf{a}_{\rm obs}(k)$ is only defined for $k=1,\dots,29$ (mid‐points), we consider
+
+   $$
+   \bigl\{\,a_{x,\rm FRH}(k),\,a_{y,\rm FRH}(k),\,a_{z,\rm FRH}(k)\bigr\}, 
+   \quad k=1,\dots,29,
+   $$
+
+   and form the magnitudes
+
+   $$
+   a_{\rm FRH}(k) 
+   = \bigl\lVert \mathbf{a}_{\rm FRH}(k)\bigr\rVert 
+   = 
+   \sqrt{\,a_{x,\rm FRH}(k)^2  +  a_{y,\rm FRH}(k)^2  +  a_{z,\rm FRH}(k)^2\,},
+   \quad k = 1,\dots,29.
+   $$
+
+4. **Implementation Notes**
+   In the Python code (Appendix A), after computing
+   $\{r_{13}(k),\,r_{23}(k),\,\hat{\mathbf{u}}_{13}(k),\,\hat{\mathbf{u}}_{23}(k)\}$, we define a function:
+
+   ```python
+   def frh_acceleration(delta, A):
+       D_minus1 = 1.0 + delta
+       # Compute M(r) factors for k=0..30
+       M13 = 1.0 + A * np.sin(delta * np.log(r13))  # shape (31,)
+       M23 = 1.0 + A * np.sin(delta * np.log(r23))  # shape (31,)
+
+       # Magnitudes of the two contributions
+       a13_mag = G * m_sun * r13**(-D_minus1) * M13  # shape (31,)
+       a23_mag = G * m_jup * r23**(-D_minus1) * M23  # shape (31,)
+
+       # Cartesian components
+       ax13 = - a13_mag * ux13
+       ay13 = - a13_mag * uy13
+       az13 = - a13_mag * uz13
+
+       ax23 = - a23_mag * ux23
+       ay23 = - a23_mag * uy23
+       az23 = - a23_mag * uz23
+
+       # Total FRH acceleration at each k=0..30
+       ax_frh_full = ax13 + ax23
+       ay_frh_full = ay13 + ay23
+       az_frh_full = az13 + az23
+
+       # Return interior 29 values (k=1..29)
+       return ax_frh_full[1:-1], ay_frh_full[1:-1], az_frh_full[1:-1]
+   ```
+
+   Then
+
+   ```python
+   ax_frh_int, ay_frh_int, az_frh_int = frh_acceleration(delta, A)  # each shape (29,)
+   a_frh_int = np.sqrt(ax_frh_int**2 + ay_frh_int**2 + az_frh_int**2)  # shape (29,)
+   ```
+
+   gives $\{a_{x,\rm FRH}(k),\,a_{y,\rm FRH}(k),\,a_{z,\rm FRH}(k)\}$ and magnitudes $\{a_{\rm FRH}(k)\}$ for $k=1,\dots,29$.
+
+---
+
+**End of Section 4**
