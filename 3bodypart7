@@ -1,0 +1,313 @@
+## Appendix A – Python Code for Parsing, Acceleration Extraction, FRH Modeling, and Optimization
+
+Save the following script as `frh_threebody_analysis.py` in the same directory as the ephemeris files:
+
+```
+sun_horizons.txt
+jupiter_horizons.txt
+achilles_horizons.txt
+```
+
+Running
+
+```
+python frh_threebody_analysis.py
+```
+
+will produce:
+
+1. **`threebody_results.csv`** (the full 29-row Table B1 with observed vs. FRH accelerations and residuals).
+2. **`frh_comparison.png`** (plot of $a_{\rm obs}$ vs. $a_{\rm FRH}$).
+
+```python
+#!/usr/bin/env python3
+# frh_threebody_analysis.py
+# ------------------------------------------
+# Three-Body Test of the Fractal-Recursive-Harmonic (FRH) Force Law
+# Using JPL/HORIZONS Ephemerides for 588 Achilles (2025-06-03 to 2025-07-03)
+# ------------------------------------------
+
+import re
+import numpy as np
+from scipy.optimize import minimize
+import matplotlib.pyplot as plt
+import csv
+
+# ------------------------------------------
+# 1. PARSE JPL/HORIZONS EPHEMERIS FILES
+# ------------------------------------------
+def parse_horizons(filename):
+    """
+    Parse a JPL/HORIZONS text file containing "$$SOE ... $$EOE" blocks.
+    Extract Julian Date and heliocentric X, Y, Z (km) for each epoch.
+    Returns: (jd_arr, x_arr, y_arr, z_arr) as NumPy arrays of length 31.
+    """
+    jd_list, x_list, y_list, z_list = [], [], [], []
+    with open(filename, 'r') as f:
+        lines = f.readlines()
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        if line.startswith('$$SOE'):
+            i += 1
+            while i < len(lines) and not lines[i].startswith('$$EOE'):
+                # Match JD line: e.g., "2460829.500000000 = A.D. 2025-Jun-03 ..."
+                jd_match = re.match(r'^(\d+\.\d+)\s*=', lines[i])
+                if jd_match:
+                    jd = float(jd_match.group(1))
+                    # Next line has "X = <sci>  Y = <sci>  Z = <sci>"
+                    xyz_line = lines[i+1]
+                    coords = re.findall(r'([+\-]?\d+\.\d+E[+\-]\d+)', xyz_line)
+                    x_val = float(coords[0])
+                    y_val = float(coords[1])
+                    z_val = float(coords[2])
+                    jd_list.append(jd)
+                    x_list.append(x_val)
+                    y_list.append(y_val)
+                    z_list.append(z_val)
+                    i += 4  # Skip velocity and other metadata lines
+                else:
+                    i += 1
+        else:
+            i += 1
+    return (
+        np.array(jd_list),
+        np.array(x_list),
+        np.array(y_list),
+        np.array(z_list)
+    )
+
+# Load ephemerides
+jd_sun, x_sun, y_sun, z_sun       = parse_horizons('sun_horizons.txt')
+jd_jup, x_jup, y_jup, z_jup       = parse_horizons('jupiter_horizons.txt')
+jd_ach, x_ach, y_ach, z_ach       = parse_horizons('achilles_horizons.txt')
+
+# Verify alignment of Julian Dates
+assert np.allclose(jd_sun, jd_jup), "Sun/Jupiter JD mismatch"
+assert np.allclose(jd_sun, jd_ach), "Sun/Achilles JD mismatch"
+
+# ------------------------------------------
+# 2. COMPUTE HELIOCENTRIC SEPARATION VECTORS
+# ------------------------------------------
+# Separation Achilles→Sun:
+rx13 = x_ach - x_sun   # shape (31,)
+ry13 = y_ach - y_sun
+rz13 = z_ach - z_sun
+
+# Separation Achilles→Jupiter:
+rx23 = x_ach - x_jup   # shape (31,)
+ry23 = y_ach - y_jup
+rz23 = z_ach - z_jup
+
+r13 = np.sqrt(rx13**2 + ry13**2 + rz13**2)  # km, shape (31,)
+r23 = np.sqrt(rx23**2 + ry23**2 + rz23**2)  # km, shape (31,)
+
+# Unit vectors:
+ux13 = rx13 / r13   # shape (31,)
+uy13 = ry13 / r13
+uz13 = rz13 / r13
+
+ux23 = rx23 / r23   # shape (31,)
+uy23 = ry23 / r23
+uz23 = rz23 / r23
+
+# ------------------------------------------
+# 3. COMPUTE OBSERVED ACCELERATION (FINITE DIFFERENCE)
+# ------------------------------------------
+dt = 86400.0  # seconds in one day
+
+ax_obs_full = (x_ach[2:] - 2*x_ach[1:-1] + x_ach[:-2]) / dt**2  # shape (29,)
+ay_obs_full = (y_ach[2:] - 2*y_ach[1:-1] + y_ach[:-2]) / dt**2
+az_obs_full = (z_ach[2:] - 2*z_ach[1:-1] + z_ach[:-2]) / dt**2
+
+# Julian Dates for midpoints k=1..29:
+jd_acc = jd_ach[1:-1]  # shape (29,), from 2460830.5 to 2460858.5
+
+ax_obs = ax_obs_full  # shape (29,)
+ay_obs = ay_obs_full
+az_obs = az_obs_full
+
+a_obs = np.sqrt(ax_obs**2 + ay_obs**2 + az_obs**2)  # shape (29,)
+
+# Validate vs Newtonian acceleration:
+def newton_acceleration_magnitude(k):
+    factor13 = r13[k]**(-2.0)
+    factor23 = r23[k]**(-2.0)
+    ax13 = -G * m_sun * factor13 * ux13[k]
+    ay13 = -G * m_sun * factor13 * uy13[k]
+    az13 = -G * m_sun * factor13 * uz13[k]
+    ax23 = -G * m_jup * factor23 * ux23[k]
+    ay23 = -G * m_jup * factor23 * uy23[k]
+    az23 = -G * m_jup * factor23 * uz23[k]
+    ax = ax13 + ax23
+    ay = ay13 + ay23
+    az = az13 + az23
+    return np.sqrt(ax*ax + ay*ay + az*az)
+
+newton_vs_obs_diff = np.zeros(29)
+for idx in range(29):
+    k = idx + 1
+    newton_vs_obs_diff[idx] = abs(a_obs[idx] - newton_acceleration_magnitude(k))
+print("Max |a_obs - a_Newton| = {:.2e} km/s^2".format(np.max(newton_vs_obs_diff)))
+
+# ------------------------------------------
+# 4. FRH ACCELERATION MODEL
+# ------------------------------------------
+G     = 6.67430e-20    # km^3 / (kg·s^2)
+m_sun = 1.9885e30      # kg
+m_jup = 1.89813e27     # kg
+
+def frh_acceleration(delta, A):
+    """
+    Compute FRH acceleration vector at each day k=0..30, then return
+    interior 29 values (k=1..29) to match observed acceleration midpoints.
+    Returns: (ax_frh_int, ay_frh_int, az_frh_int), each shape (29,)
+    """
+    D_minus1 = 1.0 + delta  # exponent for 1/r^(1+delta)
+    # M(r) factors:
+    M13 = 1.0 + A * np.sin(delta * np.log(r13))  # shape (31,)
+    M23 = 1.0 + A * np.sin(delta * np.log(r23))  # shape (31,)
+
+    # Magnitudes of each contribution:
+    a13_mag = G * m_sun * r13**(-D_minus1) * M13  # shape (31,)
+    a23_mag = G * m_jup * r23**(-D_minus1) * M23  # shape (31,)
+
+    # Cartesian components:
+    ax13 = - a13_mag * ux13   # shape (31,)
+    ay13 = - a13_mag * uy13
+    az13 = - a13_mag * uz13
+
+    ax23 = - a23_mag * ux23   # shape (31,)
+    ay23 = - a23_mag * uy23
+    az23 = - a23_mag * uz23
+
+    # Total FRH acceleration at each k=0..30:
+    ax_frh_full = ax13 + ax23  # shape (31,)
+    ay_frh_full = ay13 + ay23
+    az_frh_full = az13 + az23
+
+    # Return interior 29 values (k=1..29)
+    return (
+        ax_frh_full[1:-1],
+        ay_frh_full[1:-1],
+        az_frh_full[1:-1]
+    )
+
+# ------------------------------------------
+# 5. SSE OBJECTIVE FUNCTION FOR FITTING
+# ------------------------------------------
+def sse_objective(params):
+    δ, A = params
+    # Enforce bounds [0,1]:
+    if δ < 0 or δ > 1 or A < 0 or A > 1:
+        return 1e20
+    ax_m, ay_m, az_m = frh_acceleration(δ, A)  # each shape (29,)
+    return np.sum((ax_m - ax_obs)**2 
+                 + (ay_m - ay_obs)**2 
+                 + (az_m - az_obs)**2)
+
+# ------------------------------------------
+# 6. COARSE 51×51 GRID SEARCH
+# ------------------------------------------
+grid_points = 51
+delta_vals = np.linspace(0.0, 1.0, grid_points)
+A_vals     = np.linspace(0.0, 1.0, grid_points)
+
+best_sse   = np.inf
+best_delta = None
+best_A     = None
+
+for δ in delta_vals:
+    for A in A_vals:
+        val = sse_objective([δ, A])
+        if val < best_sse:
+            best_sse   = val
+            best_delta = δ
+            best_A     = A
+
+rmse_coarse = np.sqrt(best_sse / (29*3))
+print(f"Coarse grid best: δ={best_delta:.2f}, A={best_A:.2f}, SSE={best_sse:.3e}, RMSE={rmse_coarse:.3e}")
+
+# ------------------------------------------
+# 7. L-BFGS-B REFINEMENT
+# ------------------------------------------
+initial_guess = np.array([best_delta, best_A])
+bounds = [(0.0, 1.0), (0.0, 1.0)]
+
+res = minimize(
+    sse_objective,
+    x0=initial_guess,
+    bounds=bounds,
+    method='L-BFGS-B',
+    options={'ftol': 1e-14, 'gtol': 1e-14, 'disp': True}
+)
+
+delta_opt, A_opt = res.x
+sse_opt = res.fun
+rmse_opt = np.sqrt(sse_opt / (29*3))
+print(f"Optimized: δ={delta_opt:.6f}, A={A_opt:.6f}, SSE={sse_opt:.3e}, RMSE={rmse_opt:.3e}")
+
+# Compute FRH at optimal parameters:
+ax_frh_opt, ay_frh_opt, az_frh_opt = frh_acceleration(delta_opt, A_opt)
+a_frh_opt = np.sqrt(ax_frh_opt**2 + ay_frh_opt**2 + az_frh_opt**2)  # shape (29,)
+
+# ------------------------------------------
+# 8. WRITE FULL 29-ROW TABLE TO CSV (Appendix B)
+# ------------------------------------------
+with open('threebody_results.csv', 'w', newline='') as csvfile:
+    writer = csv.writer(csvfile)
+    # Header:
+    writer.writerow([
+        'JD_mid',
+        'x_ach (km)', 'y_ach (km)', 'z_ach (km)',
+        'ax_obs (km/s^2)', 'ay_obs (km/s^2)', 'az_obs (km/s^2)', 'a_obs (km/s^2)',
+        'ax_frh (km/s^2)', 'ay_frh (km/s^2)', 'az_frh (km/s^2)', 'a_frh (km/s^2)',
+        'Res_x (km/s^2)', 'Res_y (km/s^2)', 'Res_z (km/s^2)', 'Res_mag (km/s^2)'
+    ])
+    for k in range(29):
+        jd_k = jd_acc[k]
+        xk, yk, zk = x_ach[k+1], y_ach[k+1], z_ach[k+1]
+        ax_o, ay_o, az_o = ax_obs[k], ay_obs[k], az_obs[k]
+        ao = a_obs[k]
+        ax_f, ay_f, az_f = ax_frh_opt[k], ay_frh_opt[k], az_frh_opt[k]
+        af = a_frh_opt[k]
+        res_x = ax_o - ax_f
+        res_y = ay_o - ay_f
+        res_z = az_o - az_f
+        res_mag = np.sqrt(res_x**2 + res_y**2 + res_z**2)
+        writer.writerow([
+            f"{jd_k:.6f}",
+            f"{xk:.6f}", f"{yk:.6f}", f"{zk:.6f}",
+            f"{ax_o:.10e}", f"{ay_o:.10e}", f"{az_o:.10e}", f"{ao:.10e}",
+            f"{ax_f:.10e}", f"{ay_f:.10e}", f"{az_f:.10e}", f"{af:.10e}",
+            f"{res_x:.10e}", f"{res_y:.10e}", f"{res_z:.10e}", f"{res_mag:.10e}"
+        ])
+print("Full 29-row data written to threebody_results.csv")
+
+# ------------------------------------------
+# 9. PLOT a_obs vs. a_frh_opt (Figure)
+# ------------------------------------------
+plt.figure(figsize=(10,5))
+plt.plot(jd_acc, a_obs, 'bo-', label='a_obs (km/s^2)')
+plt.plot(jd_acc, a_frh_opt, 'rs-', label=f'a_FRH (δ={delta_opt:.6f}, A={A_opt:.6f})')
+plt.xlabel('Julian Date (mid-points)')
+plt.ylabel('Acceleration Magnitude (km/s²)')
+plt.title('Observed vs. FRH-Predicted Acceleration: 588 Achilles')
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.savefig('frh_comparison.png', dpi=300)
+plt.close()
+print("Plot saved as frh_comparison.png")
+```
+
+**Notes:**
+
+* Make sure you have installed the required Python packages: `numpy`, `scipy`, `matplotlib`.
+* The script prints the maximum difference between finite‐difference and Newtonian accelerations (should be $\lesssim2\times10^{-10}\,\mathrm{km/s}^2$), the coarse grid best‐fit, and the refined best‐fit.
+* The file `threebody_results.csv` contains the full 29 rows corresponding to Table B1.
+* The plot `frh_comparison.png` visually compares $a_{\rm obs}(k)$ (blue circles) vs. $a_{\rm FRH}(k; \delta_{\rm opt},A_{\rm opt})$ (red squares).
+
+---
+
+**End of Appendix A**
