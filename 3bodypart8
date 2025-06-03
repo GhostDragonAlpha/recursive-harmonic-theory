@@ -1,0 +1,14 @@
+## Appendix B – Data Availability
+
+The complete 29-row dataset of observed versus FRH-predicted accelerations—used for Table B1 in this paper—is available in the file **`threebody_results.csv`**, which contains for each daily midpoint (JD 2460830.5 through JD 2460858.5) the following columns:
+
+1. **JD\_mid** – Julian Date of the finite‐difference midpoint.
+2. **x\_ach, y\_ach, z\_ach (km)** – Heliocentric position of 588 Achilles at that JD.
+3. **ax\_obs, ay\_obs, az\_obs (km/s²)** – Components of the observed acceleration (finite‐difference).
+4. **a\_obs (km/s²)** – Magnitude of the observed acceleration.
+5. **ax\_frh, ay\_frh, az\_frh (km/s²)** – FRH‐predicted acceleration components at $(\delta=1,\;A=1)$.
+6. **a\_frh (km/s²)** – Magnitude of the FRH‐predicted acceleration.
+7. **Res\_x, Res\_y, Res\_z (km/s²)** – Residual components $\bigl(a_{\rm obs} - a_{\rm FRH}\bigr)$.
+8. **Res\_mag (km/s²)** – Magnitude of the residual vector $\|\mathbf{a}_{\rm obs} - \mathbf{a}_{\rm FRH}\|$.
+
+You can recreate this dataset yourself by downloading the “geometric, heliocentric, ecliptic J2000.0” Cartesian ephemerides for Sun, Jupiter, and 588 Achilles over 2025 June 3–July 3 (daily) from JPL/HORIZONS ([https://ssd.jpl.nasa.gov/horizons.cgi](https://ssd.jpl.nasa.gov/horizons.cgi)).  After parsing positions exactly as described in Section 2 and applying the finite‐difference formula in Section 3, you will obtain the same 29 mid‐point accelerations and FRH predictions.
