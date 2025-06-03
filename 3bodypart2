@@ -1,0 +1,133 @@
+## 2. Data Acquisition and Preprocessing
+
+### 2.1. JPL/HORIZONS Ephemerides Download
+
+We acquired raw Cartesian ephemerides for Sun, Jupiter, and 588 Achilles from JPL/HORIZONS ([https://ssd.jpl.nasa.gov/horizons.cgi](https://ssd.jpl.nasa.gov/horizons.cgi)) with the following parameters:
+
+* **Time Span:** 2025-06-03 00:00 TDB through 2025-07-03 00:00 TDB (inclusive).
+* **Step Size:** 1440 minutes (1 day), yielding 31 epochs at exactly 00:00 TDB each day.
+* **Coordinate Type:** “Geometric, heliocentric, ecliptic J2000.0” Cartesian.
+* **Targets & Centers:**
+
+  * Sun (Target ID 10; Center = Solar System Barycenter)
+  * Jupiter (Target ID 599; Center = Solar System Barycenter)
+  * 588 Achilles (Target ID 588; Center = Solar System Barycenter)
+* **Output Format:** Plain‐text “Computer‐Readable Table” with `$$SOE … $$EOE` blocks.
+
+Each ephemeris file—saved as `sun_horizons.txt`, `jupiter_horizons.txt`, and `achilles_horizons.txt`—contains 31 blocks of the form:
+
+```
+$$SOE
+  2460829.500000000 = A.D. 2025-Jun-03 00:00:00.0000 TDB
+  X =  1.234567890123456E+08   Y = -2.345678901234567E+08   Z =  3.456789012345678E+07
+  VX=  1.234567890123456E+01   VY= -2.345678901234567E+01   VZ=  3.456789012345678E+00
+  Δ‐T =  69.184,  Range= ...
+  …
+$$EOE
+```
+
+where:
+
+* The first line in each block gives the Julian Date (JD) and the UTC‐equivalent date/time.
+* The second line provides Cartesian X, Y, Z (km).
+* The third line provides velocities VX, VY, VZ (km/s), which we ignore.
+* Subsequent lines (Δ-T, Range, etc.) are not used.
+
+This download process ensures that all three bodies have exactly 31 epochs: JD 2460829.5 (2025-06-03) through JD 2460859.5 (2025-07-03), evenly spaced by 1 day.
+
+### 2.2. Parsing Ephemerides into NumPy Arrays
+
+To extract usable arrays of positions and dates, we implemented a Python parser (see full code in Appendix A).  For each file, the parser:
+
+1. **Scans** line by line until it encounters `$$SOE`.
+2. **Reads** the Julian Date from a line matching the pattern `^(\d+\.\d+)\s*=`.
+3. **Reads** the next line to extract three floating‐point numbers in scientific notation corresponding to X = … Y = … Z = … (km).
+4. **Appends** those three floats (X, Y, Z) into lists (one list per coordinate) and the JD into a separate list.
+5. **Skips** the following velocity and Δ-T/Range lines until the next JD or `$$EOE`.
+6. **Repeats** until `$$EOE` ends the block.
+
+This produces—for each body—a JD array of length 31 and three position arrays of length 31 (X, Y, Z in km).  Immediately after parsing all three files, we verify alignment:
+
+```python
+assert np.allclose(jd_sun, jd_jup)
+assert np.allclose(jd_sun, jd_ach)
+```
+
+confirming that all JDs match exactly.  The final NumPy arrays are:
+
+* **Sun:**
+
+  ```python
+  jd_sun  = ndarray(shape=(31,))   # Julian Dates
+  x_sun   = ndarray(shape=(31,))   # X‐coordinate (km)
+  y_sun   = ndarray(shape=(31,))   # Y‐coordinate (km)
+  z_sun   = ndarray(shape=(31,))   # Z‐coordinate (km)
+  ```
+* **Jupiter:**
+
+  ```python
+  jd_jup  = ndarray(shape=(31,))   # Julian Dates (identical to jd_sun)
+  x_jup   = ndarray(shape=(31,))   # X‐coordinate (km)
+  y_jup   = ndarray(shape=(31,))   # Y‐coordinate (km)
+  z_jup   = ndarray(shape=(31,))   # Z‐coordinate (km)
+  ```
+* **588 Achilles:**
+
+  ```python
+  jd_ach  = ndarray(shape=(31,))   # Julian Dates (identical to jd_sun)
+  x_ach   = ndarray(shape=(31,))   # X‐coordinate (km)
+  y_ach   = ndarray(shape=(31,))   # Y‐coordinate (km)
+  z_ach   = ndarray(shape=(31,))   # Z‐coordinate (km)
+  ```
+
+Each index $k=0$ corresponds to JD 2460829.5 (2025-06-03), $k=1$ to JD 2460830.5 (2025-06-04), and so on up to $k=30$ → JD 2460859.5 (2025-07-03).
+
+### 2.3. Forming Heliocentric Separation Vectors
+
+With the heliocentric positions in hand, we form the separation vectors of Achilles relative to the Sun and relative to Jupiter for each day $k=0,\ldots,30$.  Denote:
+
+* $\mathbf{r}_{13}(k)$ = position of Achilles minus position of Sun at index $k$.
+* $\mathbf{r}_{23}(k)$ = position of Achilles minus position of Jupiter at index $k$.
+
+Concretely:
+
+```python
+# Separation of Achilles from Sun:
+rx13 = x_ach - x_sun   # shape (31,)
+ry13 = y_ach - y_sun
+rz13 = z_ach - z_sun
+
+# Separation of Achilles from Jupiter:
+rx23 = x_ach - x_jup   # shape (31,)
+ry23 = y_ach - y_jup
+rz23 = z_ach - z_jup
+```
+
+Each of these three arrays (`rx13`, `ry13`, `rz13`) has length 31 and gives the Cartesian components of $\mathbf{r}_{13}(k)$.  Similarly for $\mathbf{r}_{23}(k)$.
+
+Next, compute the Euclidean norms (distances in km):
+
+```python
+r13 = np.sqrt(rx13**2 + ry13**2 + rz13**2)   # shape (31,)  [km]
+r23 = np.sqrt(rx23**2 + ry23**2 + rz23**2)   # shape (31,)  [km]
+```
+
+Thus, $r_{13}(k) = \|\mathbf{r}_{13}(k)\|$ and $r_{23}(k) = \|\mathbf{r}_{23}(k)\|$.  Over the interval June 3–July 3, $r_{13}$ ranges roughly from 2.5 AU to 5.5 AU (converted into km ≈ $3.7\times10^8$ km to $8.2\times10^8$ km), while $r_{23}$ fluctuates around Jupiter’s orbital radius (≈ 5.2 AU).
+
+Finally, compute the unit vectors:
+
+```python
+ux13 = rx13 / r13    # shape (31,)
+uy13 = ry13 / r13
+uz13 = rz13 / r13
+
+ux23 = rx23 / r23    # shape (31,)
+uy23 = ry23 / r23
+uz23 = rz23 / r23
+```
+
+so that $\hat{\mathbf{u}}_{13}(k) = (\,u_{x,13}(k),\,u_{y,13}(k),\,u_{z,13}(k)\,)$ and similarly for $\hat{\mathbf{u}}_{23}(k)$.  These unit vectors encode the directions of the gravitational pull from Sun→Achilles and Jupiter→Achilles, respectively, and are needed to form vector accelerations in both the Newtonian and FRH laws.
+
+---
+
+**End of Section 2**
