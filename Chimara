@@ -1,0 +1,163 @@
+# Game Design Document: Project Chimera
+
+**Version:** 0.1
+**Date:** June 11, 2025
+**Lead Designer:** You
+
+---
+
+## 1. High Concept
+
+**Project Chimera** is a first-person, open-universe simulation game that combines the vast scale and deep flight mechanics of titles like *Star Citizen* with emergent, player-driven systems of farming and economy. Built from the ground up for VR and powered by a proprietary AI system, the game offers players unprecedented agency to carve out their own existence in a persistent, dynamic galaxy.
+
+---
+
+## 2. Core Pillars (Design Goals)
+
+1.  **Unprecedented Emergence & Agency:** The universe is not static. It is a sandbox driven by the user's proprietary AI system. Faction territories, economic supply-and-demand, and NPC goals will shift and react to player actions, creating a world that feels truly alive.
+2.  **Deep, Immersive Simulation:** From the high-skill ceiling of the Newtonian flight model to the detailed interactions within a VR cockpit, every system is designed for immersion and mastery. Players should feel like they are truly present and in control of their ship and their destiny.
+3.  **Grounded, Tangible Existence:** Players are not just pilots; they are inhabitants. They can claim land, build homesteads, cultivate crops, and participate in a tangible, ground-level economy. This provides a meaningful contrast to the high-tech life among the stars.
+
+---
+
+## 3. Gameplay Mechanics
+
+### 3.1. Core Flight Model
+
+The flight model is the heart of the space experience. It is based on realistic physics to provide a challenging and rewarding experience.
+
+* **Physics Engine:** True Newtonian physics with 6 Degrees of Freedom (6DoF). Momentum and thrust are key.
+* **Flight Assist Computer:** To manage the high skill floor, all ships are equipped with a toggleable "Flight Assist" computer.
+    * **Flight Assist ON:** The ship's computer automatically applies counter-thrust, making flight feel more intuitive and atmospheric, similar to an arcade model.
+    * **Flight Assist OFF:** The computer provides no assistance. The player has raw control over all thrusters, enabling advanced maneuvers like drifting and flip-turns.
+
+### 3.2. Farming & Homesteading
+
+Players can acquire plots of land on habitable planets. The farming system will be a core economic driver.
+
+* **Cultivation:** Players can grow a variety of crops, from basic foodstuffs to exotic plants that produce materials for crafting advanced components.
+* **Resource Management:** Requires managing resources like water, power, and soil nutrients.
+* **Integration:** Farmed goods can be sold at trading posts, used for personal survival, or processed into more valuable trade goods.
+
+### 3.3. VR Interaction Model
+
+The game is designed with a "VR-first" philosophy.
+
+* **Cockpit Interaction:** All ship controls (joystick, throttle, MFDs - Multi-Function Displays) will be physically interactable in VR.
+* **On-Foot Gameplay:** First-person exploration, farming, and interaction will be handled through standard VR locomotion and hand controls.
+
+---
+
+## 4. Technical Specifications & Codebase
+
+### 4.1. Game Engine
+
+* **Engine:** Unity (Latest Long-Term Support version).
+* **Primary Language:** C#
+
+### 4.2. Core Codebase: `ShipFlightController.cs`
+
+This is the foundational C# script for implementing the core flight model in Unity. It is designed to be attached to a ship's `GameObject` and controlled by a separate input handler.
+
+```csharp
+// GDD Section: 4.2
+// File: ShipFlightController.cs
+// Description: Core Newtonian physics flight model for all ships in Project Chimera.
+
+using UnityEngine;
+
+[RequireComponent(typeof(Rigidbody))]
+public class ShipFlightController : MonoBehaviour
+{
+    [Header("Engine Specifications")]
+    [SerializeField] private float mainThrustStrength = 100f;
+    [SerializeField] private float maneuveringThrustStrength = 50f;
+    [SerializeField] private float maxVelocity = 1000f; // Max velocity for manual flight mode
+
+    [Header("Flight Assist Settings")]
+    [SerializeField] private bool flightAssistActive = true;
+    [SerializeField] private float stoppingDampener = 2.0f; // How aggressively FA tries to stop the ship
+
+    private Rigidbody rb;
+    private Vector3 thrustInput; // X/Y for strafing, Z for forward/backward
+    private Vector3 torqueInput; // Pitch, Yaw, Roll
+
+    void Awake()
+    {
+        rb = GetComponent<Rigidbody>();
+        // Ensure the Rigidbody is set up for space physics
+        rb.useGravity = false;
+        rb.drag = 0;
+        rb.angularDrag = 0;
+    }
+
+    void FixedUpdate()
+    {
+        ApplyThrust();
+        ApplyTorque();
+
+        if (flightAssistActive)
+        {
+            ApplyFlightAssist();
+        }
+
+        // Enforce a maximum velocity to keep speeds manageable in combat/manual flight
+        if (rb.velocity.magnitude > maxVelocity)
+        {
+            rb.velocity = rb.velocity.normalized * maxVelocity;
+        }
+    }
+
+    // Public methods for input handlers to call
+    public void SetThrustInput(Vector3 input)
+    {
+        this.thrustInput = Vector3.ClampMagnitude(input, 1f);
+    }
+
+    public void SetTorqueInput(Vector3 input)
+    {
+        this.torqueInput = Vector3.ClampMagnitude(input, 1f);
+    }
+
+    public void ToggleFlightAssist()
+    {
+        flightAssistActive = !flightAssistActive;
+    }
+
+    private void ApplyThrust()
+    {
+        Vector3 relativeThrust = new Vector3(
+            thrustInput.x * maneuveringThrustStrength,
+            thrustInput.y * maneuveringThrustStrength,
+            thrustInput.z * mainThrustStrength
+        );
+
+        rb.AddRelativeForce(relativeThrust);
+    }
+
+
+
+    private void ApplyTorque()
+    {
+        Vector3 relativeTorque = new Vector3(
+            torqueInput.x * maneuveringThrustStrength,
+            torqueInput.y * maneuveringThrustStrength,
+            torqueInput.z * maneuveringThrustStrength
+        );
+
+        rb.AddRelativeTorque(relativeTorque);
+    }
+
+    private void ApplyFlightAssist()
+    {
+        // If there is no player input, apply counter-forces to bring the ship to a stop.
+        if (thrustInput.magnitude == 0f)
+        {
+            rb.velocity = Vector3.Lerp(rb.velocity, Vector3.zero, stoppingDampener * Time.fixedDeltaTime);
+        }
+        if (torqueInput.magnitude == 0f)
+        {
+            rb.angularVelocity = Vector3.Lerp(rb.angularVelocity, Vector3.zero, stoppingDampener * Time.fixedDeltaTime);
+        }
+    }
+}
